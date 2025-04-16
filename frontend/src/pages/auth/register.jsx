@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { auth } from '../../firebase';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../../firebase';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from '../../firebase';
+
+
 
 
 export const Register = () => {
@@ -16,8 +20,15 @@ export const Register = () => {
             e.preventDefault();
         }
         try {
-            await createUserWithEmailAndPassword(auth,email,password);
+            const userCredential = await createUserWithEmailAndPassword(auth,email,password);
+            const user = userCredential.user;
+            
             console.log("User signed up successfully!");
+            
+            await setDoc(doc(db, "users", user.uid),{
+                email: user.email,
+                createdAt: new Date()
+            });
             navigate('/login');
             setError('');
         }

@@ -1,15 +1,17 @@
 import React from 'react';
-import greece from "../../assets/images/greece.jpg"
+import { useNavigate } from 'react-router-dom';
+import greece from "../../assets/images/maldives.jpg"
 
 export const Home = () => {
+    const navigate = useNavigate();
 
     return (
         <div className="homepage">
             <header className="header">
                 <h2 className="logo">PlanAway</h2>
                 <div className="auth">
-                    <button className="login-btn">Login</button>
-                    <button className="signup-btn">Sign up</button>
+                    <button className="login-btn" onClick={() => navigate('/login')}>Login</button>
+                    <button className="signup-btn" onClick={() => navigate('/register')}>Sign up</button>
                 </div>
             </header>
 
