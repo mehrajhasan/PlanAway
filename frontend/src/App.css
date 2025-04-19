@@ -1,6 +1,7 @@
 
 body{
   background-color: white;
+  color: black;
 }
 
 .homepage{
@@ -116,6 +117,7 @@ input{
   height: 450px;
   width: 97.5%;
   border-radius: 30px;
+  object-fit: cover;
 }
 
 .cta-button {
@@ -154,4 +156,238 @@ input{
   margin: 25px;
   padding: 10px 20px;
   border-radius: 25px;
+}
+
+.tripView{
+  display: flex;
+  
+}
+
+.tripSidebar{
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  height: 100vh;
+  background-color: #fff;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: transform 0.3s ease-in-out;
+  border-right: 1px solid #e5e5e5;
+}
+
+.sidebar-header{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.logo-row{
+  padding: 0px 20px;
+}
+
+.sidebar-content{
+  padding: 16px;
+  box-sizing: border-box;
+}
+.close-btn{
+  background-color: white;
+  border: none;
+}
+
+.new-trip-btn{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: rgb(21, 150, 255);
+  border-radius: 40px;
+  border: none;
+  width: 100%;
+}
+
+.trip-header{
+  color: gray;
+  margin-bottom: 0px;
+  font-size: 14px;
+}
+
+.trip-list{
+  padding: 0px 5px 5px 0px;
+}
+
+.trip-item{
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 0px 10px 0px;
+  margin-bottom: 5px;
+}
+
+.trip-item.active{
+  background-color: #e8f5ff;
+  border-radius: 10px;
+}
+
+.trip-title{
+  color: black;
+  font-weight: 600;
+  margin-bottom: 0px;
+  font-size: 15px;
+  margin-top: 12.5px;
+}
+
+.trip-date{
+  color: gray;
+  font-weight: 500;
+  margin-top: 0px;
+  font-size: 12px;
+  margin-bottom: 12.5px;
+}
+
+.trip-nav{
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.trip-nav-btn{
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 12.5px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.trip-nav-btn.active{
+  background-color: #e8f5ff;
+  border-radius: 10px;
+  color: rgb(6, 143, 255);
+}
+
+.collaborators{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  border-top: 1px solid #e5e5e5;
+  cursor: pointer;
+}
+
+.collab-text{
+  font-weight: 500;
+}
+
+.hamburger-btn{
+  padding-left: 5px;
+}
+
+.trip-content{
+  height:100%;
+}
+
+.trip-navbar{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  top: 0;
+  position: fixed;  
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0 16px;
+  z-index: 100;
+  width: 100%;
+}
+
+.trip-navtitle{
+  color: black;
+  font-weight: 700;
+  margin-bottom: 0px;
+  font-size: 20px;
+  margin-top: 12.5px;
+}
+
+.trip-navdate{
+  color: gray;
+  font-weight: 500;
+  margin-top: 0px;
+  font-size: 14px;
+  margin-bottom: 12.5px;
+}
+
+.trip-extras{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  right: 0;
+  width: 200px;
+  position: fixed;
+  padding: 0 16px;
+}
+
+.trip-fav, .hamburger-btn{
+  background-color: white;
+  border: none;
+}
+
+.trip-share-btn{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: rgb(21, 150, 255);
+  border-radius: 10px;
+  border: none;
+  height: 40px;
+  padding: 0px 20px 0px;
+}
+
+.trip-main-page{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto; 
+  height: auto;
+  width: auto;
+}
+
+/* .trip-overview{
+  display: flex;
+  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  justify-content: space-evenly;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.trip-duration, .trip-weather, .trip-size, .trip-budget{
+  border-radius: 50px;
+  padding: 25px;
+  background-color: red;
+  box-sizing: border-box;
+} */
+
+.trip-overview {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 16px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background-color: blue;
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+
+}
+.trip-overview > * {
+  flex: 0 1 auto;  
+  border-radius: 40px;      
+  padding: 25px;
+  background-color: red;
 }
