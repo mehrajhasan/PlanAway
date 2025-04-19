@@ -8,6 +8,7 @@ import Home from './pages/home/home'
 import Login from './pages/auth/login'
 import Register from './pages/auth/register'
 import Dashboard from './pages/dashboard/dashboard'
+import TripStart from "./pages/trip/startTrip";
 import './App.css'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/login" element={<Login/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/trip" element={<TripStart/>}/>
         </Routes>
       </Router>
     </>
