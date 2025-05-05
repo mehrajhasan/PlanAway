@@ -16,7 +16,7 @@ export const Login = () => {
         try {
             await signInWithEmailAndPassword(auth,email,password);
             console.log("Logged in successfully!");
-            navigate('/dashboard');
+            navigate('/trip');
             setError('');
         }
         catch(err){

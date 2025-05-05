@@ -397,6 +397,21 @@ input{
   background-color: white;
   border-radius: 12px;
   padding: 20px;
+  margin-bottom: 24px;
+}
+
+.reservation-header{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.add-btn{
+  padding: 0px;
+  background-color: white;
+  color: rgb(21, 150, 255);
+  border: none;
+  cursor: pointer;
 }
 
 .reservation-text{
@@ -409,6 +424,7 @@ input{
   justify-content: space-around;
   align-items: center;
   width: 100%;
+  padding-bottom: 20px;
 }
 
 .reservation-types > * {
@@ -428,4 +444,13 @@ input{
 .reservation-details{
   border: solid lightgray 1px;
   border-radius: 12px;
+}
+
+.trip-itinerary{
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
 }

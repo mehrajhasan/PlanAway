@@ -170,7 +170,12 @@ export const TripStart = () => {
                     </div>
 
                     <div className="trip-reservations">
-                        <h3 className="reservation-text">Reservations</h3>
+                        <div className="reservation-header">
+                            <h3 className="reservation-text">Reservations</h3>
+                            <button className="add-btn">
+                                <h5>Add new</h5>
+                            </button>
+                        </div>
                         <div className="reservation-types">
                             <div className={`reservation-flight ${activeReservation === "Flights" ? "active" : ""}`} onClick={() => setActiveReservation("Flights")}>
                                 <Plane className="plane-icon" size={17.5}/>
@@ -197,7 +202,7 @@ export const TripStart = () => {
                     </div>
 
                     <div className="trip-itinerary">
-                        <h3>stuff</h3>
+                        <h3>Itinerary</h3>
                     </div>
                 </div>
             </div>
