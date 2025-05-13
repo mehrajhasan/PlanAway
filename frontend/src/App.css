@@ -454,3 +454,91 @@ input{
   padding: 20px;
   margin-bottom: 24px;
 }
+
+/* Modal component styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.modal {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  width: 30%;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+}
+
+.modal .form-group input,
+.modal .form-group select {
+  background-color: #fbfbfb;   
+  color: #000;               
+  border: 1px solid #ddd;   
+}
+
+.modal .form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0%);
+}
+
+.modal input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 12px;
+}
+
+.btn {
+  padding: 12px 16px;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #4AD1E5;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3bc0d3;
+}
