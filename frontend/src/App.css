@@ -174,6 +174,8 @@ input{
   background: #fff;
   border-right: 1px solid #e5e5e5;
   overflow-y: auto;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar-header{
@@ -183,6 +185,14 @@ input{
   border-bottom: 1px solid #e5e5e5;
 }
 
+.trips-section {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 4px; /* Optional: to avoid hidden scrollbars */
+}
+
+
 .logo-row{
   padding: 0px 20px;
 }
@@ -190,6 +200,7 @@ input{
 .sidebar-content{
   padding: 16px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 .close-btn{
   background-color: white;
@@ -216,6 +227,18 @@ input{
 .trip-list{
   padding: 0px 5px 5px 0px;
 }
+
+.trip-list-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.trip-list {
+  display: flex;
+  flex-direction: column;
+}
+
 
 .trip-item{
   display: flex;
@@ -370,25 +393,81 @@ input{
   margin-bottom: 24px;
 }
 
+.trip-cover-img {
+  width: 100vw;
+  height: 100%; /* Increased height for better visibility */
+  object-fit: cover;
+  border-radius: 12px;
+  object-position: center center; /* Reset to center */
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Optional: adds subtle depth */
+}
+
 .trip-overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 50px;
 }
 
 .trip-overview > * {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: #fff;
-  padding: 20px;
+  padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  width: auto;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
+
 
 @media (max-width: 960px) {
   .trip-overview {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.trip-duration-icon,
+.trip-weather-icon,
+.trip-size-icon,
+.trip-budget-icon {
+  background-color: #e8f0fe;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  padding: 10px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.trip-weather-icon {
+  background-color: #fff6c5;
+}
+.trip-size-icon {
+  background-color: #d4f8dd;
+}
+.trip-budget-icon {
+  background-color: #f4e4ff;
+}
+
+.trip-overview h4 {
+  color: gray;
+  font-size: 13px;
+  margin-bottom: 0px;
+  margin-top: -4px;
+}
+
+.trip-overview h5 {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+}
+
+.trip-map{
+  margin-bottom: 50px;
 }
 
 .trip-reservations{
@@ -455,7 +534,7 @@ input{
   margin-bottom: 24px;
 }
 
-/* Modal component styling */
+
 .modal-overlay {
   position: fixed;
   top: 0;

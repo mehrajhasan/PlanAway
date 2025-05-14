@@ -20,7 +20,7 @@ function App() {
           <Route path="/login" element={<Login/>}/>
           <Route path="/register" element={<Register/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
-          <Route path="/trip" element={<TripStart/>}/>
+          <Route path="/trip/:tripId" element={<TripStart/>}/>
         </Routes>
       </Router>
     </>

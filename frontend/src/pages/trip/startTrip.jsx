@@ -2,35 +2,72 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Menu, Plus, Users, Heart, Circle, CalendarIcon, CircleDollarSign, CalendarDaysIcon, CalendarCheck, CalendarRange, LucideCalendar, SunIcon, Car, Hotel, Plane, Utensils} from 'lucide-react';
+import { useNavigate,  useLocation, useParams } from 'react-router-dom';
+import { ChevronLeft, Menu, Plus, Users, Heart, Circle, CalendarIcon, DollarSign, CalendarDaysIcon, CalendarCheck, CalendarRange, LucideCalendar, SunIcon, Car, Hotel, Plane, Utensils} from 'lucide-react';
 
 export const TripStart = () => {
-    //testing
-    const [trips, setTrips] = useState([
-        { id: '1', title: 'Greek Islands Adventure', dateRange: 'Jun 12 – Jun 25, 2025', location: 'Athens, Santorini, Mykonos'},
-        { id: '2', title: 'Bali Getaway', dateRange: 'Aug 5 – Aug 15, 2025', location: 'Denpasar, Ubud, Seminyak'}
-      ]);
+    const { tripId } = useParams();
+    const [trips, setTrips] = useState([]);
     const [activeTrip, setActiveTrip] = useState(0);
+    const [imageUrl, setImageUrl] = useState(null);
+
+    useEffect(() => {
+        const fetchImage = async () => {
+            const destination = trips[activeTrip]?.destination;
+            if (!destination) return;
+
+            try {
+            const response = await fetch(
+                `https://api.pexels.com/v1/search?query=${encodeURIComponent(destination)}&per_page=1`,
+                {
+                    headers: {
+                        Authorization: "T2zBsuqtXcFOTg0t0X4pXlbXv46Bd0LFRLpyV372s6OBAYFkoth9Ho5K"
+                    }
+                }
+            );
+
+            const data = await response.json();
+            const photoUrl = data.photos?.[0]?.src?.landscape;
+
+            if (photoUrl) {
+                setImageUrl(photoUrl);
+            } else {
+                setImageUrl(null);
+            }
+            } catch (err) {
+            console.error("Failed to fetch Pexels image", err);
+            }
+        };
+
+        fetchImage();
+    }, [activeTrip, trips]);
+
+
+    useEffect(() => {
+        const allTrips = JSON.parse(localStorage.getItem("trips")) || [];
+
+        const formattedTrips = allTrips.map(t => ({
+            ...t,
+            dateRange: `${t.startDate.slice(0, 10)} – ${t.endDate.slice(0, 10)}`
+        }));
+
+        setTrips(formattedTrips);
+
+        const foundIndex = formattedTrips.findIndex(t => t.id === tripId);
+        if (foundIndex !== -1) setActiveTrip(foundIndex);
+    }, [tripId]);
+
+
+
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [activeSection, setActiveSection] = useState("Overview");
     const [activeReservation, setActiveReservation] = useState("Flights");
-
     const [favorite, setFavorite] = useState(false);
 
-      //figure out later
-    // useEffect(() => {
-    //     const existing = localStorage.getItem('guestId');
-    //     if(!existing){
-    //         localStorage.setItem('guestId', uuidv4());
-    //     }
-    // }, []);
-
-    // const handleSave = async () => {
-    //     const user = auth.currentUser;
-    //     const guestId = localStorage.getItem('guestId');
-        
-    // }
+    if (trips.length === 0) {
+    return <div className="loading-screen"><h2>Loading trip...</h2></div>;
+    }
+    
 
     return (
         <div className="tripView">
@@ -53,17 +90,22 @@ export const TripStart = () => {
 
                         <div className="trips-section">
                             <h4 className="trip-header">YOUR TRIPS</h4>
-                            <div className="trip-list">
-                            {trips.map((trip, index) => (
-                                <div
-                                    key={trip.id}
-                                    className={`trip-item ${activeTrip === index ? 'active' : ''}`}
-                                    onClick={() => setActiveTrip(index)}
-                                >
-                                    <h4 className="trip-title">{trip.title}</h4>
-                                    <h5 className="trip-date">{trip.dateRange}</h5>
+                            <div className="trip-list-scroll">
+                                <div className="trip-list">
+                                {trips.map((trip, index) => (
+                                    <div
+                                        key={trip.id}
+                                        className={`trip-item ${activeTrip === index ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setActiveTrip(index);
+                                            navigate(`/trip/${trips[index].id}`);
+                                        }}
+                                    >
+                                        <h4 className="trip-title">{trip.name}</h4>
+                                        <h5 className="trip-date">{trip.dateRange}</h5>
+                                    </div>
+                                    ))}
                                 </div>
-                                ))}
                             </div>
                         </div>
 
@@ -98,8 +140,8 @@ export const TripStart = () => {
                         </button>
                     )}
                     <div className="trip-info">
-                        <h3 className="trip-navtitle">{trips[activeTrip].title}</h3>
-                        <h5 className="trip-navdate">{trips[activeTrip].dateRange} &#8226; {trips[activeTrip].location}</h5>
+                        <h3 className="trip-navtitle">{trips[activeTrip].name}</h3>
+                        <h5 className="trip-navdate">{trips[activeTrip].dateRange} &#8226; {trips[activeTrip].destination}</h5>
                     </div>
                     
                     <div className="trip-extras">
@@ -119,23 +161,32 @@ export const TripStart = () => {
 
                 <div className="trip-main-page">
                     <div className="trip-pic">
-                        <h1>pic here</h1>
+                        {imageUrl ? (
+                            <img src={imageUrl} alt="Destination" className="trip-cover-img" />
+                        ) : (
+                            <div className="fallback-pic">No image found</div>
+                        )}
                     </div>
 
                     <div className="trip-overview">
                         <div className="trip-duration">
                             <div className="trip-duration-icon">
-                                <CalendarIcon/>
+                                <CalendarIcon color="#4285f4"/>
                             </div>
                             <div className="trip-duration-details">
                                 <h4>Duration</h4>
-                                <h5>14 days</h5>
+                                <h5>{
+                                        Math.ceil(
+                                        (new Date(trips[activeTrip].endDate) - new Date(trips[activeTrip].startDate)) / (1000 * 60 * 60 * 24)
+                                        )
+                                    } days
+                                </h5>
                             </div>
                         </div>
 
                         <div className="trip-weather">
                             <div className="trip-weather-icon">
-                                <SunIcon/>
+                                <SunIcon color="#fbbc05"/>
                             </div>
                             <div className="trip-weather-details">
                                 <h4>Weather</h4>
@@ -145,28 +196,35 @@ export const TripStart = () => {
 
                         <div className="trip-size">
                             <div className="trip-size-icon">
-                                <Users/>
+                                <Users color="#34a853"/>
                             </div>
                             <div className="trip-size-details">
                                 <h4>Group Size</h4>
-                                <h5>3 travelers</h5>
+                                <h5>{trips[activeTrip].travelers} travelers</h5>
                             </div>
                         </div>
 
                         <div className="trip-budget">
                             <div className="trip-budget-icon">
-                                <CircleDollarSign/>
+                                <DollarSign color="#a142f4"/>
                             </div>
                             <div className="trip-budget-details">
                                 <h4>Budget</h4>
-                                <h5>$2,500</h5>
+                                <h5>${trips[activeTrip].budget}</h5>
                             </div>
                         </div>
                     </div>
 
 
                     <div className="trip-map">
-                        <h3>map</h3>
+                        <iframe
+                            width="100%"
+                            height="300"
+                            style={{ border: 0, borderRadius: '12px' }}
+                            loading="lazy"
+                            allowFullScreen
+                            src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyCvbPp-StCEnPiaUfFeqoRU2fqdQW2WWC4&center=${trips[activeTrip].lat},${trips[activeTrip].lng}&zoom=12`}
+                        />
                     </div>
 
                     <div className="trip-reservations">

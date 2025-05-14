@@ -9,14 +9,20 @@ export const Home = () => {
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
     const handleCreateTrip = (tripData) => {
-        // 1) Generate a temporary ID (we’ll replace this with Firestore later)
-        const newTripId = Date.now().toString();
+        const newTripId = Date.now().toString(); // or uuidv4()
 
-        // 2) TODO: here you’d call your Firestore addDoc() and get the real tripId
-        // const realId = await addDoc(...)
+        // 1) Get existing trips
+        const existingTrips = JSON.parse(localStorage.getItem('trips')) || [];
 
-        // 3) Navigate to the trip page, passing along the form data in location.state
-        navigate(`/trip/${newTripId}`, { state: { trip: tripData } });
+        // 2) Add new trip with its ID
+        const tripWithId = { id: newTripId, ...tripData };
+        const updatedTrips = [...existingTrips, tripWithId];
+
+        // 3) Save to localStorage
+        localStorage.setItem('trips', JSON.stringify(updatedTrips));
+
+        // 4) Navigate without passing trip in state
+        navigate(`/trip/${newTripId}`);
     };
     
     return (

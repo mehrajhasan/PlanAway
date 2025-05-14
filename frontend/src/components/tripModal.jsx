@@ -4,7 +4,6 @@ const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
   // Form state
   const destRef = useRef();
   useEffect(() => {
-  // only run when open, destRef exists, and places lib is loaded
   if (
     !isOpen ||
     typeof window.google === 'undefined' ||
@@ -21,20 +20,31 @@ const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
       destRef.current,
       { types: ['(cities)'] }
     );
+
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
-      console.log('CHOSEN PLACE', place.formatted_address || place.name);
-      // optionally: set that into your tripData here
-      setTripData(d => ({
-        ...d,
-        destination: place.formatted_address || place.name
-      }));
+      const location = place.geometry?.location;
+
+      if (location) {
+        setTripData(prev => ({
+          ...prev,
+          destination: place.formatted_address || place.name,
+          lat: location.lat(),
+          lng: location.lng()
+        }));
+      } else {
+        console.warn("⚠️ No geometry found for selected place.");
+        setTripData(prev => ({
+          ...prev,
+          destination: place.formatted_address || place.name,
+          lat: null,
+          lng: null
+        }));
+      }
     });
   } catch (err) {
-    console.error('Places Autocomplete init failed:', err);
+    console.error('Google Places Autocomplete init failed:', err);
   }
-
-  // no cleanup needed for Autocomplete
 }, [isOpen]);
 
 
@@ -44,7 +54,9 @@ const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
     startDate: '',
     endDate: '',
     travelers: '2',
-    budget: ''
+    budget: '0',
+    lat: '', 
+    lng: ''
   });
 
   // Handle input changes
