@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import TripPlanningModal from '../../components/tripModal';
 import greece from "../../assets/images/maldives.jpg"
@@ -9,7 +10,7 @@ export const Home = () => {
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
     const handleCreateTrip = (tripData) => {
-        const newTripId = Date.now().toString(); // or uuidv4()
+        const newTripId = uuidv4();
 
         // 1) Get existing trips
         const existingTrips = JSON.parse(localStorage.getItem('trips')) || [];
