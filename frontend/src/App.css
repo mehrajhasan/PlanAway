@@ -204,7 +204,9 @@ input{
 }
 .close-btn{
   background-color: white;
+  color: black;
   border: none;
+  margin-right: -20px;
 }
 
 .new-trip-btn{
@@ -479,10 +481,14 @@ input{
   margin-bottom: 24px;
 }
 
-.reservation-header{
+.reservation-header, .itinerary-header, .spending-header, .ta-header{
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+
+.itinerary-header, .spending-header, .ta-header{
+  margin-top: -10px;
 }
 
 .add-btn{
@@ -520,12 +526,7 @@ input{
   color: rgb(21, 150, 255);
 }
 
-.reservation-details{
-  border: solid lightgray 1px;
-  border-radius: 12px;
-}
-
-.trip-itinerary{
+.trip-itinerary, .trip-spending, .travel-assistant{
   display: flex;
   flex-direction: column;
   background-color: white;
@@ -541,6 +542,7 @@ input{
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 1000;
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
@@ -579,6 +581,7 @@ input{
 .form-group {
   margin-bottom: 20px;
   text-align: left;
+
 }
 
 .form-group label {
@@ -603,6 +606,10 @@ input{
   padding-right: 12px;
 }
 
+.modal input::placeholder {
+  color: #8d8d8d;
+}
+
 .btn {
   padding: 12px 16px;
   border-radius: 50px;
@@ -620,4 +627,410 @@ input{
 
 .btn-primary:hover {
   background-color: #3bc0d3;
+}
+
+.reservation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reservation-modal {
+  background-color: white;
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  padding-right: 50px;
+  max-width: 520px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.reservation-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-right: -45px;
+  margin-bottom: 24px;
+}
+
+.reservation-modal-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.reservation-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: black;
+}
+
+.reservation-form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.reservation-form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.reservation-modal input,
+.reservation-modal select {
+  background-color: #fbfbfb;
+  color: #000;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 6px;
+  width: 100%;
+  font-size: 15px;
+  margin-left: 10px;
+  margin-bottom: 14px;
+  box-sizing: border-box;
+}
+
+.reservation-modal input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0%);
+}
+
+.reservation-modal input::placeholder {
+  color: #8d8d8d;
+}
+
+.reservation-card,.spending-item{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #e5e5e5;
+  cursor: pointer;
+}
+
+.reservation-card:last-child, .spending-item:last-child{
+  border-bottom: none;
+}
+
+.reservation-left, .spending-left{
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  margin-left: 5px;
+}
+
+.reservation-info,.reservation-price, .spending-info, .spending-price{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px;
+}
+.reservation-info, .spending-info{
+  margin-left: 5px;
+}
+
+.reservation-icon{
+  display: flex;
+  align-items: center;
+  background-color: #e8f0fe;
+  border-radius: 10%;
+  padding: 10px;
+  width: 24px;
+  height: 24px;
+}
+
+#hotel-bg, #lodging{
+  background-color: #d4f8dd;
+}
+
+#car-bg, #transportation{
+  background-color: #fff6c5;
+}
+
+#dining-bg, #dining{
+  background-color: #fce8e6;
+}
+
+#shopping{
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+#activities{
+  background-color: rgba(236, 72, 153, 0.1);
+}
+
+#other{
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.reservation-right,.spending-right{
+  display: flex;
+  flex-direction: column;
+}
+
+.reservation-price, .spending-price{
+  display: flex;
+  align-items: flex-end;
+}
+
+.reservation-card h5, .spending-item h5 {
+  color: gray;
+  font-size: 12px;
+  margin-bottom: 0px;
+  margin-top: 2.5px;
+}
+
+.reservation-info h5, .spending-info h5{
+  color: gray;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 0px;
+  margin-top: 2.5px;
+}
+
+.reservation-card h4, .spending-item h4 {
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0;
+  margin-bottom: -1.5px;
+}
+
+.reservation-price h4, .spending-price h4 {
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0;
+}
+
+.reservation-price h5, .spending-price h5 {
+  font-weight: 500;
+  font-size: 13px;
+  margin: 0;
+}
+
+.reservation-details, .expenses-details{
+  border: solid lightgray 1px;
+  border-radius: 12px;
+}
+
+
+.reservation-list, .expenses-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.reservation-placeholder{
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.empty-itinerary-item{
+  all: unset;
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: center;
+  width: calc(100% - 55px);
+  height: 100%;
+  margin-left: 50px;
+  margin-bottom: 10px;
+  color: rgb(139, 139, 139);
+  border: 1px lightgray dashed !important;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.itinerary-plus{
+  display: flex;
+  margin-right: 5px;
+  align-items: center;
+}
+
+.itinerary-day{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(21, 150, 255);
+  color: white;
+  height: 35px;
+  width: 35px;
+  border-radius: 20px;
+  margin: 8px;
+  margin-right: 12px;
+  font-weight: 600;
+}
+
+.itinerary-day-header{
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.itinerary-item{
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: row;
+  align-items: center;
+  width: calc(100% - 55px);
+  height: 100%;
+  margin-left: 50px;
+  margin-bottom: 10px;
+  border: 1px lightgray solid;
+  border-radius: 12px;
+  position: relative;
+}
+
+.itinerary-time{
+  display: flex;
+  padding: 0 20px 0 20px;
+}
+
+.itinerary-ellipse{
+  position: relative;
+  margin-left: auto;
+}
+
+.itinerary-extra{
+  display: flex;
+  margin-left: auto;
+  margin-right: 15px;
+  color: rgb(139, 139, 139);
+  cursor: pointer;
+}
+
+.dropDown {
+  position: absolute;
+  transform: translateY(15px);
+  right: 0;
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+  z-index: 999;
+}
+
+.dropDown-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.dropDown-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1f2328;
+  cursor: pointer;
+}
+
+.dropDown-list li:hover {
+  background-color: #f6f8fa;
+}
+
+.dropDown-list svg {
+  margin-left: 8px;
+  stroke-width: 1.5;
+}
+
+.spending-summary{
+  display: flex;
+  justify-content: space-around;
+  flex-direction: row;
+  margin-bottom: 25px;
+  gap: 30px;
+}
+
+.total-spent{
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-radius: 15px;
+  width: 100%;
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.total-spent h5, .spend-breakdown h5{
+  font-weight: 600;
+  font-size: 14px;
+}
+
+#total-spent{
+  background-color: #e8f0fe31;
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+}
+
+.spend-breakdown{
+  background: linear-gradient(135deg, rgb(62, 74, 120), #101936);
+  color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 10px;
+  width: 100%;
+  line-height: 0.5;
+}
+
+.spend-breakdown-header, .total-spent-top, .average-spend{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 5px 10px 5px 10px;
+}
+
+.total-spent-details{
+  line-height: 0.01;
+}
+
+.average-spend{
+  background-color: #e8f0fe31;
+  border-radius: 12px;
+  padding: 0 10px;
+  width: 50%;
+  line-height: 0.5;
+}
+
+.spend-analytics{
+  display: flex;
+}
+
+.spending-item{
+  cursor: pointer;
+}
+
+.travel-assistant{
+  background: linear-gradient(135deg, #3f9efd, #480bb8) !important;
+  color: white;
+}
+
+.ta-icon{
+  display: flex;
+  align-items: center;
+}
+
+.ta-text{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#ta-btn{
+  background: none;
+}
+.ta-body-header h4{
+  font-weight: 500;
 }
