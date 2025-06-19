@@ -1,50 +1,58 @@
 import React, { useState, useRef, useEffect } from 'react';
+import LoginModal from './loginModal';
+import RegisterModal from './registerModal';
+import { auth } from '../firebase';
 
 const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
-  // Form state
+
+  const [showLogin, setShowLogin] = useState(false);
+  const [pendingTrip, setPendingTrip] = useState(null);
+  const [authMode, setAuthMode] = useState('login');
+
+
   const destRef = useRef();
   useEffect(() => {
-  if (
-    !isOpen ||
-    typeof window.google === 'undefined' ||
-    !window.google.maps ||
-    !window.google.maps.places ||
-    !destRef.current
-  ) {
-    return;
-  }
+    if (
+      !isOpen ||
+      typeof window.google === 'undefined' ||
+      !window.google.maps ||
+      !window.google.maps.places ||
+      !destRef.current
+    ) {
+      return;
+    }
 
-  let autocomplete;
-  try {
-    autocomplete = new window.google.maps.places.Autocomplete(
-      destRef.current,
-      { types: ['(cities)'] }
-    );
+    let autocomplete;
+    try {
+      autocomplete = new window.google.maps.places.Autocomplete(
+        destRef.current,
+        { types: ['(cities)'] }
+      );
 
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      const location = place.geometry?.location;
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        const location = place.geometry?.location;
 
-      if (location) {
-        setTripData(prev => ({
-          ...prev,
-          destination: place.formatted_address || place.name,
-          lat: location.lat(),
-          lng: location.lng()
-        }));
-      } else {
-        console.warn("⚠️ No geometry found for selected place.");
-        setTripData(prev => ({
-          ...prev,
-          destination: place.formatted_address || place.name,
-          lat: null,
-          lng: null
-        }));
-      }
-    });
-  } catch (err) {
-    console.error('Google Places Autocomplete init failed:', err);
-  }
+        if (location) {
+          setTripData(prev => ({
+            ...prev,
+            destination: place.formatted_address || place.name,
+            lat: location.lat(),
+            lng: location.lng()
+          }));
+        } else {
+          console.warn("No geometry found for selected place.");
+          setTripData(prev => ({
+            ...prev,
+            destination: place.formatted_address || place.name,
+            lat: null,
+            lng: null
+          }));
+        }
+      });
+    } catch (err) {
+      console.error('Google Places Autocomplete init failed:', err);
+    }
 }, [isOpen]);
 
 
@@ -59,6 +67,20 @@ const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
     lng: ''
   });
 
+  const genItinerary = (startDateStr, endDateStr) => {
+    const itinerary = {};
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toLocaleDateString('en-CA');
+      itinerary[key] = [];
+    }
+
+    return itinerary;
+  };
+
+
   // Handle input changes
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -71,18 +93,38 @@ const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Process data before submission
+
     const formattedData = {
       ...tripData,
       startDate: new Date(tripData.startDate),
       endDate: new Date(tripData.endDate),
       travelers: parseInt(tripData.travelers),
-      budget: parseFloat(tripData.budget)
+      budget: parseFloat(tripData.budget),
+      notes: [],
+      reservations: {},
+      itinerary: genItinerary(tripData.startDate, tripData.endDate),
+      expenses: [],
     };
-    
+
+    if (!auth.currentUser) {
+      setPendingTrip(formattedData);
+      setAuthMode('login'); // default to login
+      setShowLogin(true);
+      return;
+    }
+
     onSubmit(formattedData);
   };
+
+  const handleLoginSuccess = () => {
+    setShowLogin(false);
+    if (pendingTrip) {
+      onSubmit(pendingTrip);
+      setPendingTrip(null);
+    }
+  };
+
+
 
   // Don't render if not open
   if (!isOpen) return null;
@@ -164,6 +206,21 @@ const TripPlanningModal = ({ isOpen, onClose, onSubmit }) => {
           </button>
         </form>
       </div>
+      {showLogin && (
+        authMode === 'login' ? (
+          <LoginModal
+            onSuccess={handleLoginSuccess}
+            onClose={() => setShowLogin(false)}
+            switchToSignup={() => setAuthMode('signup')}
+          />
+        ) : (
+          <RegisterModal
+            onSuccess={handleLoginSuccess}
+            onClose={() => setShowLogin(false)}
+            switchToLogin={() => setAuthMode('login')}
+          />
+        )
+      )}
     </div>
   );
 };
