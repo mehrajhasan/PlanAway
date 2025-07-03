@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, getDocs, deleteDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
-import { BarChart3, TrendingUp, User, Plus, Bell, Settings, Plane, DollarSign, Globe, Clock, MapPin, Calendar, Users, Star } from 'lucide-react';
+import { BarChart3, TrendingUp, Trash2, User, Plus, Bell, Settings, Plane, DollarSign, Globe, Clock, MapPin, Calendar, Users, Star } from 'lucide-react';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -54,6 +54,29 @@ const Dashboard = () => {
     fetchTrips();
   }, [user]);
 
+  const handleDeleteTrip = async (tripId) => {
+    if (!user) return;
+
+    const confirm = window.confirm("Delete this trip?");
+    if (!confirm) return;
+
+    try {
+      await deleteDoc(doc(db, "trips", tripId));
+      // also update user doc to remove tripId
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.data();
+
+      const updatedTrips = (userData.trips || []).filter(id => id !== tripId);
+      await updateDoc(userRef, { trips: updatedTrips });
+
+      setUserTrips(prev => prev.filter(t => t.id !== tripId));
+    } catch (err) {
+      console.error("Error deleting trip:", err);
+    }
+  };
+
+
   const travelStats = {
     totalTrips: userTrips.length,
     totalSpent: userTrips.reduce((sum, t) => sum + (t.totalCost || 0), 0),
@@ -98,11 +121,15 @@ const Dashboard = () => {
         daysUntil: Math.ceil((start - new Date()) / (1000 * 60 * 60 * 24)),
         duration: `${Math.ceil((end - start) / (1000 * 60 * 60 * 24))} days`,
         weather: t.weather || "N/A",
-        image: t.flag || "🌍",
+        image: t.imageUrl || "🌍",
         groupSize: `${t.group?.length || 1} travelers`
       };
     })
-    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    .sort((a, b) => {
+  const aDate = a.startDate?.toDate?.() || new Date(a.startDate);
+  const bDate = b.startDate?.toDate?.() || new Date(b.startDate);
+  return aDate - bDate;
+});
 
       const recentTrips = userTrips
     .filter(t => new Date(t.endDate) < new Date())
@@ -222,10 +249,16 @@ const Dashboard = () => {
               <div className="trips-list">
                 {upcomingTrips.map((trip, index) => (
                   <div key={trip.id} className="trip-card clickable" onClick={() => navigate(`/trip/${trip.id}`)}>
-                    <div className="trip-flag">{trip.image}</div>
+                    <div className="trip-flag">
+                        {trip.image.startsWith('http') ? (
+                            <img src={trip.image} alt={trip.name} className="dash-trip-pic" />
+                        ) : (
+                            <span>{trip.image}</span>
+                        )}
+                    </div>
                     <div className="trip-details">
                       <div className="trip-header">
-                        <div>
+                        <div className="trip-subheader">
                           <h4 className="trip-name">{trip.name}</h4>
                           <p className="trip-location">
                             <MapPin size={16} />
@@ -234,14 +267,26 @@ const Dashboard = () => {
                         </div>
                         <div className="trip-badge">{trip.daysUntil} days to go</div>
                       </div>
-                      <div className="trip-info-grid">
-                        <div className="trip-info-item">
-                          <Calendar size={16} />
-                          <span>{trip.duration}</span>
+                      <div className="trip-info-container">
+                        <div className="trip-info-grid">
+                          <div className="trip-info-item">
+                            <Calendar size={16} />
+                            <span>{trip.duration}</span>
+                          </div>
+                          <div className="trip-info-item">
+                            <Users size={16} />
+                            <span>{trip.travelers} travelers</span>
+                          </div>
                         </div>
-                        <div className="trip-info-item">
-                          <Users size={16} />
-                          <span>{trip.travelers} travelers</span>
+                        <div className="trip-info-delete">
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleDeleteTrip(trip.id);
+                          }}
+                          className="delete-button" style={{background: "none",border: "none"}}>
+                            <Trash2 size={15} color="red"/>
+                          </button>
                         </div>
                       </div>
                     </div>
