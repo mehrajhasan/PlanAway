@@ -12,7 +12,8 @@
 - 📸 Customizable user profiles with avatars  
 
 ### 🧱 Built With
-React · Node.js · Firebase · Google Cloud Platform
+Java · Spring Boot · React · PostgreSQL · Google Cloud Platform
+
 
 ---
 
