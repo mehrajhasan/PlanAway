@@ -3,7 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
-import { BarChart3, TrendingUp, Trash2, User, Plus, Bell, Settings, Plane, DollarSign, Globe, Clock, MapPin, Calendar, Users, Star } from 'lucide-react';
+import { BarChart3, Forward, Trash2, User, Plus, Bell, Settings, Plane, DollarSign, Globe, Clock, MapPin, Calendar, Users, Star } from 'lucide-react';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -131,16 +131,27 @@ const Dashboard = () => {
   return aDate - bDate;
 });
 
-      const recentTrips = userTrips
-    .filter(t => new Date(t.endDate) < new Date())
-    .sort((a, b) => new Date(b.endDate) - new Date(a.endDate))
+  const recentTrips = userTrips
+    .filter(t => {
+      const end = t.endDate?.toDate?.() || new Date(t.endDate);  // handles Firestore Timestamp or string
+      return end < new Date();
+    })
+    .sort((a, b) => {
+      const aEnd = a.endDate?.toDate?.() || new Date(a.endDate);
+      const bEnd = b.endDate?.toDate?.() || new Date(b.endDate);
+      return bEnd - aEnd;
+    })
     .slice(0, 3)
     .map(t => ({
+      id: t.id,
       name: t.name,
-      location: t.location,
-      rating: t.rating || 4.5,
-      spent: t.totalCost || 0
-    }));
+      location: t.destination,
+      spent: t.totalCost || 0,
+      rating: t.rating || 'N/A',
+      image: t.imageUrl || "🌍"
+  }));
+
+
 
   const spendingByCategory = Object.entries(userTrips.reduce((acc, trip) => {
     (trip.expenses || []).forEach(exp => {
@@ -178,7 +189,7 @@ const Dashboard = () => {
 
       <div className="main-content">
         <div className="welcome-section">
-          <h2 className="welcome-title">Welcome back, Traveler! ✈️</h2>
+          <h2 className="welcome-title">Welcome back, Traveler!</h2>
           <p className="welcome-subtitle">Here's your travel summary and what's coming up next.</p>
         </div>
 
@@ -247,52 +258,104 @@ const Dashboard = () => {
             </div>
             <div className="card-content">
               <div className="trips-list">
-                {upcomingTrips.map((trip, index) => (
-                  <div key={trip.id} className="trip-card clickable" onClick={() => navigate(`/trip/${trip.id}`)}>
-                    <div className="trip-flag">
+                {upcomingTrips.length > 0 ? (
+                  upcomingTrips.map((trip, index) => (
+                    <div key={trip.id} className="trip-card clickable" onClick={() => navigate(`/trip/${trip.id}`)}>
+                      <div className="trip-flag">
                         {trip.image.startsWith('http') ? (
-                            <img src={trip.image} alt={trip.name} className="dash-trip-pic" />
+                          <img src={trip.image} alt={trip.name} className="dash-trip-pic" />
                         ) : (
-                            <span>{trip.image}</span>
+                          <span>{trip.image}</span>
                         )}
-                    </div>
-                    <div className="trip-details">
-                      <div className="trip-header">
-                        <div className="trip-subheader">
-                          <h4 className="trip-name">{trip.name}</h4>
-                          <p className="trip-location">
-                            <MapPin size={16} />
-                            {trip.destination}
-                          </p>
-                        </div>
-                        <div className="trip-badge">{trip.daysUntil} days to go</div>
                       </div>
-                      <div className="trip-info-container">
-                        <div className="trip-info-grid">
-                          <div className="trip-info-item">
-                            <Calendar size={16} />
-                            <span>{trip.duration}</span>
+                      <div className="trip-details">
+                        <div className="trip-header">
+                          <div className="trip-subheader">
+                            <h4 className="trip-name">{trip.name}</h4>
+                            <p className="trip-location">
+                              <MapPin size={16} />
+                              {trip.destination}
+                            </p>
                           </div>
-                          <div className="trip-info-item">
-                            <Users size={16} />
-                            <span>{trip.travelers} travelers</span>
-                          </div>
+                          <div className="trip-badge">{trip.daysUntil} days to go</div>
                         </div>
-                        <div className="trip-info-delete">
-                          <button onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            handleDeleteTrip(trip.id);
-                          }}
-                          className="delete-button" style={{background: "none",border: "none"}}>
-                            <Trash2 size={15} color="red"/>
-                          </button>
+                        <div className="trip-info-container">
+                          <div className="trip-info-grid">
+                            <div className="trip-info-item">
+                              <Calendar size={16} />
+                              <span>{trip.duration}</span>
+                            </div>
+                            <div className="trip-info-item">
+                              <Users size={16} />
+                              <span>{trip.travelers} travelers</span>
+                            </div>
+                          </div>
+                          <div className="trip-info-stuff">
+                            <button onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeleteTrip(trip.id);
+                            }}
+                            className="share-button" style={{background: "none",border: "none"}}>
+                              <Forward size={15} color="gray"/>
+                            </button>
+                            <div className="trip-info-delete">
+                              <button onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleDeleteTrip(trip.id);
+                              }}
+                              className="delete-button" style={{background: "none",border: "none"}}>
+                                <Trash2 size={15} color="red"/>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                      {index === 0 && <div className="next-trip-badge">Next Up!</div>}
                     </div>
-                    {index === 0 && <div className="next-trip-badge">Next Up!</div>}
+                  ))
+                ) : (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '2rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '64px',
+                      height: '64px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '50%',
+                      marginBottom: '12px'
+                    }}>
+                      <MapPin size={32} color="#9ca3af" />
+                    </div>
+                    <h3 style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      color: '#111827',
+                      marginBottom: '8px',
+                      margin: '0 0 8px 0'
+                    }}>
+                      No Upcoming Trips
+                    </h3>
+                    <p style={{
+                      color: '#6b7280',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      maxWidth: '300px',
+                      margin: 0
+                    }}>
+                      You don't have any adventures planned yet. Start exploring and create your next memorable journey!
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -306,25 +369,92 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="card-content">
-            <div className="recent-trips-grid">
-              {recentTrips.map((trip, index) => (
-                <div key={index} className="recent-trip-card">
-                  <div className="recent-trip-header">
-                    <div>
-                      <h4 className="recent-trip-name">{trip.name}</h4>
-                      <p className="recent-trip-location">{trip.location}</p>
+            <div className="trips-list">
+              {recentTrips.length > 0 ? (
+                recentTrips.map((trip) => (
+                  <div key={trip.id} className="trip-card clickable" onClick={() => navigate(`/trip/${trip.id}`)}>
+                    <div className="trip-flag">
+                      {trip.image?.startsWith('http') ? (
+                        <img src={trip.image} alt={trip.name} className="dash-trip-pic" />
+                      ) : (
+                        <span>{trip.image || "🌍"}</span>
+                      )}
                     </div>
-                    <div className="recent-trip-rating">
-                      <Star size={16} fill="currentColor" />
-                      <span>{trip.rating}</span>
+                    <div className="trip-details">
+                      <div className="trip-header">
+                        <div className="trip-subheader">
+                          <h4 className="trip-name">{trip.name}</h4>
+                          <p className="trip-location">
+                            <MapPin size={16} />
+                            {trip.location}
+                          </p>
+                        </div>
+                        <div className="trip-badge faded">Completed</div>
+                      </div>
+                      <div className="trip-info-stuff" style={{ display: "flex", justifyContent: "right" }}>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleDeleteTrip(trip.id);
+                        }}
+                        className="share-button" style={{ background: "none", border: "none" }}>
+                          <Forward size={15} color="gray" />
+                        </button>
+                        <div className="trip-info-delete">
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleDeleteTrip(trip.id);
+                          }}
+                          className="delete-button" style={{ background: "none", border: "none" }}>
+                            <Trash2 size={15} color="red" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="recent-trip-spent">
-                    ${trip.spent.toLocaleString()}
+                ))
+              ) : (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '2rem 1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: '#f3f4f6',
+                    borderRadius: '50%',
+                    marginBottom: '12px'
+                  }}>
+                    <MapPin size={32} color="#9ca3af" />
                   </div>
-                  <div className="recent-trip-label">Total spent</div>
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: '8px',
+                    margin: '0 0 8px 0'
+                  }}>
+                    No Recent Trips
+                  </h3>
+                  <p style={{
+                    color: '#6b7280',
+                    fontSize: '14px',
+                    lineHeight: '1.5',
+                    maxWidth: '300px',
+                    margin: 0
+                  }}>
+                    You haven't completed any adventures yet. Your travel memories will appear here once you finish your trips!
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
