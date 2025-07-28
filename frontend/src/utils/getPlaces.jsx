@@ -6,8 +6,6 @@ export const GetPlaces = async (cityQuery, tag) => {
   const key = `${city}_${tag}`.toLowerCase().replace(/\s+/g, "");
   const ref = doc(db, "recommendationsCache", key);
 
-  console.log("🧠 Query key:", key);
-
   // check Firestore cache
   const snap = await getDoc(ref);
   if (snap.exists()) return snap.data().results;

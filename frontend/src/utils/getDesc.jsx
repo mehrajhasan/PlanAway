@@ -17,15 +17,18 @@ export const GetDesc = (place) => {
   };
 
   const emoji = typeEmoji[mainType] || "📍";
+  const capitalizedType = capitalize(mainType?.replace(/_/g, " "));
 
-  if (rating && user_ratings_total) {
-    return `${emoji} ${capitalize(mainType)} rated ${rating} stars (${user_ratings_total}+ reviews)`;
+  if (mainType && rating && user_ratings_total) {
+    return `${emoji} ${capitalizedType} · ${rating}★ (${user_ratings_total}+ reviews)`;
   }
 
+  // if only type is available
   if (mainType) {
-    return `${emoji} ${capitalize(mainType.replace("_", " "))}`;
+    return `${emoji} ${capitalizedType} · Local favorite`;
   }
 
+  // fallback
   return `${emoji} Local spot`;
 };
 
