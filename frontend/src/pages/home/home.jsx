@@ -8,6 +8,9 @@ import greece from "../../assets/images/maldives.jpg"
 import requireAuth from '../../hooks/requireAuth';
 import LoginModal from '../../components/loginModal';
 import RegisterModal from '../../components/registerModal';
+import Features from '../../components/features';
+import Testimonials from '../../components/testomonials';
+import Footer from '../../components/footer';
 import {
   MapIcon,
   PlaneIcon,
@@ -16,6 +19,7 @@ import {
   UsersIcon,
   FileTextIcon,
 } from "lucide-react";
+
 export const Home = () => {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,7 +98,7 @@ export const Home = () => {
             </section>
             <button className="cta-button" onClick={openModal}>Start planning</button>
 
-            <h2 className="featureName">Your All-in-One Trip Planner</h2>
+            {/* <h2 className="featureName">Your All-in-One Trip Planner</h2>
             <section className="feature-grid">
                 {[
                     {
@@ -134,7 +138,10 @@ export const Home = () => {
                     <p>{f.desc}</p>
                     </div>
                 ))}
-            </section>
+            </section> */}
+            <Features/>
+            <Testimonials/>
+            <Footer/>
 
             <TripPlanningModal
                 isOpen={isModalOpen}
