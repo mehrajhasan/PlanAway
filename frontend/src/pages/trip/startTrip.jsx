@@ -1,40 +1,151 @@
-import React, { act, useEffect, useState } from 'react';
+import React, { act, useEffect, useState, useRef } from 'react';
 import { auth, db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion} from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate,  useLocation, useParams } from 'react-router-dom';
+import Notepad from '../../components/notepad';
 import ReservationModal from '../../components/resModal';
 import ItineraryModal from '../../components/itineraryModal';
 import EditItineraryModal from '../../components/editItineraryModal';
 import EllipseDropdown from '../../components/ellipseDropdown';
-import { ChevronLeft, Menu, Plus, Users, Heart, Circle, CalendarIcon, DollarSign, SunIcon, Car, Hotel, Plane, Utensils, Ellipsis, ShoppingBag, Ticket, ReceiptText, TrendingUp} from 'lucide-react';
+import { ChevronLeft, Menu, Plus, Users, Heart, Circle, CalendarIcon, DollarSign, SunIcon, Car, Hotel, Plane, Utensils, Ellipsis, ShoppingBag, Ticket, ReceiptText, TrendingUp, Bot} from 'lucide-react';
 import TripPlanningModal from '../../components/tripModal';
 import ExpenseModal from '../../components/expenseModal';
 import EditExpenseModal from '../../components/editExpenseModal';
 import EditReservationModal from '../../components/editResModal';
+import TravelAssistant from '../../components/travelAssistant';
+import { useWeather } from '../../hooks/useWeather';
+import { getWeatherIcon } from '../../utils/weather';
+import requireAuth from '../../hooks/requireAuth';
+
+
 
 export const TripStart = () => {
     const { tripId } = useParams();
     const navigate = useNavigate();
     const [trips, setTrips] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [authChecked, setAuthChecked] = useState(false);
     const [activeTrip, setActiveTrip] = useState(0);
     const [imageUrl, setImageUrl] = useState(null);
     const GCP_APIKEY1 = import.meta.env.VITE_GCP_APIKEY1;
     const GCP_APIKEY2 = import.meta.env.VITE_GCP_APIKEY2;
     const PEXELS_APIKEY = import.meta.env.VITE_PEXELS_APIKEY;
+    const weather = useWeather(trips[activeTrip]?.lat, trips[activeTrip]?.lng);
 
     useEffect(() => {
-        const fetchImage = async () => {
-            const destination = trips[activeTrip]?.destination;
-            if (!destination) return;
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            let tripsData = [];
+
+            if (user) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const tripIds = userDoc.data()?.trips || [];
+                const tripDocs = await Promise.all(
+                    tripIds.map(id => getDoc(doc(db, 'trips', id)))
+                );
+
+                tripsData = tripDocs
+                    .filter(doc => doc.exists())
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+            } else {
+                const guestTrips = JSON.parse(localStorage.getItem("trips")) || [];
+                tripsData = guestTrips;
+            }
+
+            const formattedTrips = tripsData.map(t => {
+                const start = new Date(
+                    t.startDate?.toDate ? t.startDate.toDate() : t.startDate
+                );
+                const end = new Date(
+                    t.endDate?.toDate ? t.endDate.toDate() : t.endDate
+                );
+
+                const dateRange = (!isNaN(start) && !isNaN(end))
+                    ? `${start.toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
+                    })} – ${end.toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
+                    })}`
+                    : "Invalid Dates";
+
+                return {
+                    ...t,
+                    dateRange
+                };
+            });
+
+            setTrips(formattedTrips);
+
+            const foundIndex = formattedTrips.findIndex(t => t.id === tripId);
+            if (foundIndex !== -1) setActiveTrip(foundIndex);
+
+            setLoading(false);
+            setAuthChecked(true);
+
+        });
+
+        return () => unsubscribe();
+    }, [tripId]);
+
+
+    // useEffect(() => {
+    //     const fetchImage = async () => {
+    //         const destination = trips[activeTrip]?.destination;
+    //         if (!destination) return;
+
+    //         try {
+    //         const response = await fetch(
+    //             `https://api.pexels.com/v1/search?query=${encodeURIComponent(destination)}&per_page=1`,
+    //             {
+    //                 headers: {
+    //                     Authorization: PEXELS_APIKEY,
+    //                 }
+    //             }
+    //         );
+
+    //         const data = await response.json();
+    //         const photoUrl = data.photos?.[0]?.src?.landscape;
+
+    //         if (photoUrl) {
+    //             setImageUrl(photoUrl);
+    //         } else {
+    //             setImageUrl(null);
+    //         }
+    //         } catch (err) {
+    //         console.error("Failed to fetch Pexels image", err);
+    //         }
+    //     };
+
+    //     fetchImage();
+    // }, [activeTrip, trips]);
+
+    useEffect(() => {
+        const fetchOrUseSavedImage = async () => {
+            const active = trips[activeTrip];
+            if (!active || !active.id || !active.destination) return;
+
+            // If image already saved in trip doc, use it
+            if (active.imageUrl) {
+            setImageUrl(active.imageUrl);
+            return;
+            }
 
             try {
             const response = await fetch(
-                `https://api.pexels.com/v1/search?query=${encodeURIComponent(destination)}&per_page=1`,
+                `https://api.pexels.com/v1/search?query=${encodeURIComponent(active.destination)}&per_page=1`,
                 {
-                    headers: {
-                        Authorization: PEXELS_APIKEY,
-                    }
+                headers: {
+                    Authorization: PEXELS_APIKEY,
+                },
                 }
             );
 
@@ -43,6 +154,13 @@ export const TripStart = () => {
 
             if (photoUrl) {
                 setImageUrl(photoUrl);
+
+                // Save it to Firestore trip doc
+                await setDoc(
+                doc(db, 'trips', active.id),
+                { imageUrl: photoUrl },
+                { merge: true }
+                );
             } else {
                 setImageUrl(null);
             }
@@ -51,24 +169,8 @@ export const TripStart = () => {
             }
         };
 
-        fetchImage();
-    }, [activeTrip, trips]);
-
-
-    useEffect(() => {
-        const allTrips = JSON.parse(localStorage.getItem("trips")) || [];
-
-        const formattedTrips = allTrips.map(t => ({
-            ...t,
-            dateRange: `${new Date(t.startDate).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: '2-digit', })} – ${new Date(t.endDate).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: '2-digit', })}`
-        }));
-
-        setTrips(formattedTrips);
-
-        const foundIndex = formattedTrips.findIndex(t => t.id === tripId);
-        if (foundIndex !== -1) setActiveTrip(foundIndex);
-    }, [tripId]);
-
+        fetchOrUseSavedImage();
+        }, [activeTrip, trips]);
 
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -91,7 +193,22 @@ export const TripStart = () => {
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [editReservation, setEditReservation] = useState(null);
+    const overviewRef = useRef();
+    const itineraryRef = useRef();
+    const expensesRef = useRef();
+    const exploreRef = useRef();
 
+    const sectionRefs = {
+        Overview: overviewRef,
+        Itinerary: itineraryRef,
+        Expenses: expensesRef,
+        Explore: exploreRef,
+    };
+
+    const handleNavClick = (section) => {
+        setActiveSection(section);
+        sectionRefs[section]?.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     useEffect(() => {
         if (tripId) {
@@ -99,7 +216,13 @@ export const TripStart = () => {
             if (savedReservations) {
                 try {
                     const parsedReservations = JSON.parse(savedReservations);
-                    setReservations(parsedReservations);
+                    setReservations({
+                        Flights: parsedReservations.Flights || [],
+                        Lodging: parsedReservations.Lodging || [],
+                        Transportation: parsedReservations.Transportation || [],
+                        Dining: parsedReservations.Dining || []
+                    });
+
                 } catch (error) {
                     console.error('Error parsing saved reservations:', error);
                     setReservations({
@@ -118,18 +241,36 @@ export const TripStart = () => {
                 });
             }
         }
-    }, [tripId]);
+    }, [activeTrip, tripId]);
 
     useEffect(() => {
         if (trips.length > 0 && trips[activeTrip]) {
-            const currentTripId = trips[activeTrip].id;
-            const savedReservations = localStorage.getItem(`reservations_${currentTripId}`);
-            if (savedReservations) {
-                try {
-                    const parsedReservations = JSON.parse(savedReservations);
-                    setReservations(parsedReservations);
-                } catch (error) {
-                    console.error('Error parsing saved reservations:', error);
+            const currentTrip = trips[activeTrip];
+
+            if (auth.currentUser) {
+                const tripReservations = currentTrip.reservations || {
+                    Flights: [],
+                    Lodging: [],
+                    Transportation: [],
+                    Dining: []
+                };
+                setReservations(tripReservations);
+            } else {
+                const savedReservations = localStorage.getItem(`reservations_${currentTrip.id}`);
+                if (savedReservations) {
+                    try {
+                        const parsed = JSON.parse(savedReservations);
+                        setReservations(parsed);
+                    } catch (err) {
+                        console.error("Bad local reservation:", err);
+                        setReservations({
+                            Flights: [],
+                            Lodging: [],
+                            Transportation: [],
+                            Dining: []
+                        });
+                    }
+                } else {
                     setReservations({
                         Flights: [],
                         Lodging: [],
@@ -137,35 +278,43 @@ export const TripStart = () => {
                         Dining: []
                     });
                 }
-            } else {
-                setReservations({
-                    Flights: [],
-                    Lodging: [],
-                    Transportation: [],
-                    Dining: []
-                });
             }
         }
-    }, [activeTrip, trips]);
+    }, [activeTrip, trips]);    
 
-    const handleCreateTrip = (tripData) => {
+
+    const handleCreateTrip = async (tripData) => {
         const newTripId = uuidv4();
+        const tripWithId = { id: newTripId, ...tripData, ownerId: auth.currentUser.uid };
 
-        const existingTrips = JSON.parse(localStorage.getItem('trips')) || [];
+        try {
+            const user = await requireAuth();
 
-        const tripWithId = { id: newTripId, ...tripData };
-        const updatedTrips = [...existingTrips, tripWithId];
-
-        localStorage.setItem('trips', JSON.stringify(updatedTrips));
-
-        navigate(`/trip/${newTripId}`);
+            if (user) {
+                await setDoc(doc(db, 'trips', newTripId), tripWithId);
+                await updateDoc(doc(db, 'users', user.uid), {trips: arrayUnion(newTripId),});
+                navigate(`/trip/${newTripId}`);
+            } else {
+                throw new Error('User cancelled login');
+            }
+        } catch (err) {
+            console.log(err);
+        }
     };
 
-    const saveReservationsToStorage = (newReservations) => {
+    const saveReservationsToStorage = async (newReservations) => {
         const currentTripId = trips[activeTrip]?.id || tripId;
         if (currentTripId) {
             try {
-                localStorage.setItem(`reservations_${currentTripId}`, JSON.stringify(newReservations));
+                if (auth.currentUser) {
+                    const tripRef = doc(db, 'trips', currentTripId);
+                    await updateDoc(tripRef, {
+                        reservations: newReservations
+                    });
+                } else {
+                    localStorage.setItem(`reservations_${currentTripId}`, JSON.stringify(newReservations));
+                }
+
             } catch (error) {
                 console.error('Error saving reservations to localStorage:', error);
             }
@@ -173,45 +322,84 @@ export const TripStart = () => {
     };
 
     const handleSaveReservation = (reservation) => {
-        const reservationWithId = {
-            ...reservation,
-            id: uuidv4()
-        };
-
-        const newReservations = {
+        const newId = uuidv4();
+        const reservationWithId = { ...reservation, id: newId };
+        const updatedReservations = {
             ...reservations,
             [reservation.type]: [...reservations[reservation.type], reservationWithId]
         };
-        
-        setReservations(newReservations);
-        saveReservationsToStorage(newReservations);
-    };
+        setReservations(updatedReservations);
+        saveReservationsToStorage(updatedReservations);
 
-    const handleEditReservation = (updatedReservation) => {
-        const category = updatedReservation.type;
+        let title = reservation.type;
+        if (reservation.type === 'Flights') title = `${reservation.fromAirport} → ${reservation.toAirport}` || 'Flight';
+        else if (reservation.type === 'Lodging') title = reservation.name || 'Lodging';
+        else if (reservation.type === 'Transportation') title = reservation.vehicle || 'Transportation';
 
-        if (!updatedReservation.id) {
-            console.log('broken')
-            return;
+        if (reservation.price) {
+            const linkedExpense = {
+                id: uuidv4(),
+                title,
+                activity: reservation.type.toLowerCase(),
+                price: parseFloat(reservation.price),
+                date: reservation.arrivalDate || reservation.checkIn || reservation.pickupDate || reservation.reservationDate || new Date().toISOString().split("T")[0],
+                notes: '',
+                taggedUsers: [],
+                linkedReservationId: newId
+            };
+            handleSaveExpense(linkedExpense);
         }
+    };
 
-        const updatedCategory = (reservations[category] || []).map((res) =>
-            res.id === updatedReservation.id ? updatedReservation : res
-        );
+    const handleEditReservation = async (updatedReservation) => {
+        const category = updatedReservation.type;
+        if (!updatedReservation.id) return;
 
-        const newReservations = {
-            ...reservations,
-            [category]: updatedCategory,
-        };
+        const updatedCategory = reservations[category].map(res => res.id === updatedReservation.id ? updatedReservation : res);
+        const updatedReservations = { ...reservations, [category]: updatedCategory };
+        setReservations(updatedReservations);
+        saveReservationsToStorage(updatedReservations);
+        setEditReservation(null);
 
-        setReservations(newReservations);
-        saveReservationsToStorage(newReservations);
-        setEditReservation(null); // close modal
+        const currentTrip = { ...trips[activeTrip] };
+        const updatedExpenses = (currentTrip.expenses || []).map(exp => {
+            if (exp.linkedReservationId === updatedReservation.id) {
+                return {
+                    ...exp,
+                    price: parseFloat(updatedReservation.price),
+                    date: updatedReservation.arrivalDate || updatedReservation.checkIn || updatedReservation.pickupDate || updatedReservation.reservationDate || new Date().toISOString().split("T")[0]
+                };
+            }
+            return exp;
+        });
+
+        currentTrip.expenses = updatedExpenses;
+        const tripsCopy = [...trips];
+        tripsCopy[activeTrip] = currentTrip;
+        setTrips(tripsCopy);
+        localStorage.setItem("trips", JSON.stringify(tripsCopy));
     };
 
 
 
-    const handleAddActivity = (date, activity) => {
+    const handleDeleteReservation = async (type, id) => {
+        const updatedTypeList = reservations[type].filter(res => res.id !== id);
+        const newReservations = { ...reservations, [type]: updatedTypeList };
+        setReservations(newReservations);
+        saveReservationsToStorage(newReservations);
+
+        const updatedTrip = { ...trips[activeTrip] };
+        updatedTrip.expenses = (updatedTrip.expenses || []).filter(e => e.linkedReservationId !== id);
+        const tripsCopy = [...trips];
+        tripsCopy[activeTrip] = updatedTrip;
+        setTrips(tripsCopy);
+        localStorage.setItem("trips", JSON.stringify(tripsCopy));
+    };
+
+
+
+
+    const handleAddActivity = async (date, activity) => {
         const dateKey = new Date(date).toISOString().split("T")[0];
         const updatedTrip = { ...trips[activeTrip] };
         const dayItems = updatedTrip.itinerary?.[dateKey] || [];
@@ -229,10 +417,19 @@ export const TripStart = () => {
         const tripsCopy = [...trips];
         tripsCopy[activeTrip] = updatedTrip;
         setTrips(tripsCopy);
-        localStorage.setItem("trips", JSON.stringify(tripsCopy));
+
+        if (auth.currentUser) {
+            const tripRef = doc(db, "trips", updatedTrip.id);
+            await updateDoc(tripRef, {
+                itinerary: updatedTrip.itinerary
+            });
+        } else {
+            localStorage.setItem("trips", JSON.stringify(tripsCopy));
+        }
     };
 
-    const handleUpdateActivity = (updatedActivity) => {
+
+   const handleUpdateActivity = async (updatedActivity) => {
         const updatedTrip = { ...trips[activeTrip] };
         const dayItems = updatedTrip.itinerary?.[editingActivity.dateKey] || [];
 
@@ -245,12 +442,22 @@ export const TripStart = () => {
         const tripsCopy = [...trips];
         tripsCopy[activeTrip] = updatedTrip;
         setTrips(tripsCopy);
-        localStorage.setItem("trips", JSON.stringify(tripsCopy));
-        setEditingActivity(null); // close modal
+
+        if (auth.currentUser) {
+            const tripRef = doc(db, "trips", updatedTrip.id);
+            await updateDoc(tripRef, {
+                itinerary: updatedTrip.itinerary
+            });
+        } else {
+            localStorage.setItem("trips", JSON.stringify(tripsCopy));
+        }
+
+        setEditingActivity(null);
     };
 
 
-    const handleDeleteActivity = (dateKey, activityId) => {
+
+    const handleDeleteActivity = async (dateKey, activityId) => {
         const trip = { ...trips[activeTrip] };
         const updatedItems = trip.itinerary[dateKey].filter((act) => act.id !== activityId);
 
@@ -259,19 +466,29 @@ export const TripStart = () => {
         const tripsCopy = [...trips];
         tripsCopy[activeTrip] = trip;
         setTrips(tripsCopy);
-        localStorage.setItem("trips", JSON.stringify(tripsCopy));
+
+        if (auth.currentUser) {
+            const tripRef = doc(db, "trips", trip.id);
+            await updateDoc(tripRef, {
+                itinerary: trip.itinerary
+            });
+        } else {
+            localStorage.setItem("trips", JSON.stringify(tripsCopy));
+        }
     };
 
-    const handleSaveExpense = (data) => {
+
+    const handleSaveExpense = async (data) => {
         const newExpense = {
             id: uuidv4(),
             title: data.title,
             activity: data.activity,
             price: parseFloat(data.price) || 0,
-            date: new Date(data.date).toISOString().split('T')[0],
+            date: new Date(data.date).toISOString().split("T")[0],
             notes: data.notes || '',
-            taggedUsers: data.taggedUsers || []
-        }
+            taggedUsers: data.taggedUsers || [],
+            linkedReservationId: data.linkedReservationId || null
+        };
 
         const updatedTrip = { ...trips[activeTrip] };
         const newExpenses = updatedTrip.expenses || [];
@@ -286,24 +503,65 @@ export const TripStart = () => {
         tripsCopy[activeTrip] = updatedTrip;
 
         setTrips(tripsCopy);
-        localStorage.setItem("trips", JSON.stringify(tripsCopy));
-    };  
 
-     const handleUpdateExpense = (updatedExpense) => {
+        try {
+            if (auth.currentUser) {
+            await updateDoc(doc(db, 'trips', updatedTrip.id), { expenses: sortedExpenses });
+            } else {
+            localStorage.setItem("trips", JSON.stringify(tripsCopy));
+            }
+        } catch (err) {
+            console.error("Failed to save expense:", err);
+        }
+    };
+  
+
+    const handleUpdateExpense = async (updatedExpense) => {
         const updatedTrip = { ...trips[activeTrip] };
-        const expenses = updatedTrip.expenses || [];
-
-        const updatedExpenses = expenses.map((e) =>
+        const updatedExpenses = updatedTrip.expenses.map((e) =>
             e.id === updatedExpense.id ? updatedExpense : e
         );
 
         updatedTrip.expenses = updatedExpenses;
-
         const tripsCopy = [...trips];
         tripsCopy[activeTrip] = updatedTrip;
+
         setTrips(tripsCopy);
-        localStorage.setItem("trips", JSON.stringify(tripsCopy));
-    };
+
+        try {
+            if (auth.currentUser) {
+            await updateDoc(doc(db, 'trips', updatedTrip.id), { expenses: updatedExpenses });
+            } else {
+            localStorage.setItem("trips", JSON.stringify(tripsCopy));
+            }
+        } catch (err) {
+            console.error("Failed to update expense:", err);
+        }
+        };
+
+
+    const handleDeleteExpense = async (expenseId) => {
+        const updatedTrip = { ...trips[activeTrip] };
+        const updatedExpenses = updatedTrip.expenses.filter((e) => e.id !== expenseId);
+
+        updatedTrip.expenses = updatedExpenses;
+        const tripsCopy = [...trips];
+        tripsCopy[activeTrip] = updatedTrip;
+
+        setTrips(tripsCopy);
+
+        try {
+            if (auth.currentUser) {
+            await updateDoc(doc(db, 'trips', updatedTrip.id), { expenses: updatedExpenses });
+            } else {
+            localStorage.setItem("trips", JSON.stringify(tripsCopy));
+            }
+        } catch (err) {
+            console.error("Failed to delete expense:", err);
+        }
+        };
+
+
 
 
     // //for calculating expenses
@@ -318,11 +576,21 @@ export const TripStart = () => {
     }, {});
 
 
+    // safe date parsing for both Timestamp and ISO
+    const startRaw = trips[activeTrip]?.startDate;
+    const endRaw = trips[activeTrip]?.endDate;
+
+    const startDate = startRaw?.toDate ? startRaw.toDate() : new Date(startRaw);
+    const endDate = endRaw?.toDate ? endRaw.toDate() : new Date(endRaw);
+
     //for avg
-    const numDays = Math.max(1, Math.ceil((new Date(trips[activeTrip]?.endDate) - new Date(trips[activeTrip]?.startDate)) / (1000 * 60 * 60 * 24)) + 1);
+    const numDays = (!isNaN(startDate) && !isNaN(endDate))
+    ? Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1)
+    : 1;
 
     //avg per day
-    const avgPerDay = totalSpent / numDays;
+    const avgPerDay = totalSpent && numDays ? totalSpent / numDays : 0;
+
 
     //daily spend track
     const spendPerDay = tripExpenses.reduce((acc, expense) => {
@@ -361,11 +629,19 @@ export const TripStart = () => {
         other: "#F59E0B"
     }
 
+    if (loading) {
+        return <div className="loading-screen"><h2>Loading trip...</h2></div>;
+    }
 
     if (trips.length === 0) {
-    return <div className="loading-screen"><h2>Loading trip...</h2></div>;
+        return <div className="empty-screen"><h2>No trips yet</h2></div>;
     }
-    
+
+    if (!loading && trips.length === 0) {
+    return <div className="empty-screen"><h2>No trips found for your account</h2></div>;
+}
+      if (!authChecked) return <div>Loading trip data...</div>;
+
 
     return (
         <div className="tripView">
@@ -410,11 +686,11 @@ export const TripStart = () => {
                         <div className="trip-details">
                             <h4 className="trip-header">TRIP DETAILS</h4>
                             <div className="trip-nav">
-                            {["Overview","Itinerary","Places to Visit","Budget","Notes"].map((section) => (
+                            {["Overview","Itinerary","Expenses","Explore"].map((section) => (
                                 <div
                                     key={section.id}
                                     className={`trip-nav-btn ${activeSection === section ? 'active' : ''}`}
-                                    onClick={() => setActiveSection(section)}
+                                    onClick={() => handleNavClick(section)}
                                 >
                                 <span>{section}</span>
                                 </div>
@@ -466,29 +742,41 @@ export const TripStart = () => {
                         )}
                     </div>
 
-                    <div className="trip-overview">
+                    <div className="trip-overview" ref={overviewRef}>
                         <div className="trip-duration">
                             <div className="trip-duration-icon">
                                 <CalendarIcon color="#4285f4"/>
                             </div>
                             <div className="trip-duration-details">
                                 <h4>Duration</h4>
-                                <h5>{
-                                        Math.ceil(
-                                        (new Date(trips[activeTrip].endDate) - new Date(trips[activeTrip].startDate)) / (1000 * 60 * 60 * 24)
-                                        )
-                                    } days
+                                <h5>{(() => {
+                                        const start = trips[activeTrip]?.startDate;
+                                        const end = trips[activeTrip]?.endDate;
+
+                                        const startDate = start?.toDate ? start.toDate() : new Date(start);
+                                        const endDate = end?.toDate ? end.toDate() : new Date(end);
+
+                                        return (!isNaN(startDate) && !isNaN(endDate))
+                                        ? `${Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))} days`
+                                        : "Unknown duration";
+                                    })()}
                                 </h5>
                             </div>
                         </div>
 
                         <div className="trip-weather">
                             <div className="trip-weather-icon">
-                                <SunIcon color="#fbbc05"/>
+                                {weather ? getWeatherIcon(weather.desc, 24) : <SunIcon color="#ccc" />}
                             </div>
                             <div className="trip-weather-details">
                                 <h4>Weather</h4>
-                                <h5>74 F</h5>
+                                {weather ? (
+                                    <h5 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {weather.temp}°F
+                                    </h5>
+                                ) : (
+                                    <h5>Loading...</h5>
+                                )}
                             </div>
                         </div>
 
@@ -507,8 +795,8 @@ export const TripStart = () => {
                                 <DollarSign color="#a142f4"/>
                             </div>
                             <div className="trip-budget-details">
-                                <h4>Budget</h4>
-                                <h5>${trips[activeTrip].budget}</h5>
+                                <h4>Total Spent</h4>
+                                <h5>${totalSpent.toFixed(2)}</h5>
                             </div>
                         </div>
                     </div>
@@ -524,7 +812,7 @@ export const TripStart = () => {
                             src={`https://www.google.com/maps/embed/v1/view?key=${GCP_APIKEY1}&center=${trips[activeTrip].lat},${trips[activeTrip].lng}&zoom=12`}
                         />
                     </div>
-
+                    <Notepad trip={trips[activeTrip]}/>
                     <div className="trip-reservations">
                         <div className="reservation-header">
                             <h3 className="reservation-text">Reservations</h3>
@@ -553,7 +841,7 @@ export const TripStart = () => {
                         </div>
 
                         <div className="reservation-details">
-                            {reservations[activeReservation].length === 0 ? (
+                            {(reservations?.[activeReservation] || []).length === 0 ? (
                                 <p className="reservation-placeholder">No reservations yet. Start logging your trip!</p>
                                 ) : (
                                 <div className="reservation-list">
@@ -581,7 +869,7 @@ export const TripStart = () => {
                                         }
                                         else if(activeReservation === "Lodging"){
                                             return (
-                                                <div className="reservation-card" key={idx}>
+                                                <div className="reservation-card" key={idx} onClick={() => setEditReservation(res)}>
                                                     <div className="reservation-left">
                                                         <div className="reservation-icon" id="hotel-bg">
                                                             <Hotel className="hotel-icon" size={25} color="#34a853"/>
@@ -603,7 +891,7 @@ export const TripStart = () => {
                                         }
                                         else if(activeReservation === "Transportation"){
                                             return (
-                                                <div className="reservation-card" key={idx}>
+                                                <div className="reservation-card" key={idx} onClick={() => setEditReservation(res)}>
                                                     <div className="reservation-left">
                                                         <div className="reservation-icon" id="car-bg">
                                                             <Car className="car-icon" size={25} color="#fbbc04"/>
@@ -625,7 +913,7 @@ export const TripStart = () => {
                                         }
                                         else if(activeReservation === "Dining"){
                                             return (
-                                                <div className="reservation-card" key={idx}>
+                                                <div className="reservation-card" key={idx} onClick={() => setEditReservation(res)}>
                                                     <div className="reservation-left">
                                                         <div className="reservation-icon" id="dining-bg">
                                                             <Utensils className="dining-icon" size={25} color="#d93025"/>
@@ -652,7 +940,7 @@ export const TripStart = () => {
 
                     </div>
 
-                    <div className="trip-itinerary">
+                    <div className="trip-itinerary" ref={itineraryRef}> 
                         <div className="itinerary-header">
                             <h3>Itinerary</h3>
                         </div>
@@ -721,7 +1009,7 @@ export const TripStart = () => {
                         ))}
                     </div>
 
-                    <div className="trip-spending">
+                    <div className="trip-spending" ref={expensesRef}>
                         <div className="spending-header">
                             <h3 className="spending-text">Expenses</h3>
                             <button className="add-btn" onClick={() => setShowExpenseModal(true)}>
@@ -817,6 +1105,9 @@ export const TripStart = () => {
                             </div>
                         </div>
                     </div>
+                    <div ref={exploreRef}>
+                        <TravelAssistant trip={trips[activeTrip]}/>
+                    </div>
                 </div>
             </div>
             {editingActivity && (
@@ -867,6 +1158,7 @@ export const TripStart = () => {
                     expense={editingExpense}
                     onClose={() => setEditingExpense(null)}
                     onSave={handleUpdateExpense}
+                    onDelete={handleDeleteExpense}
                 />
             )}
             {editReservation && (
@@ -874,10 +1166,9 @@ export const TripStart = () => {
                     editingData={editReservation}
                     onSave={handleEditReservation}
                     onClose={() => setEditReservation(null)}
+                    onDelete={handleDeleteReservation}
                 />
             )}
-
-
         </div>
     )
 }
