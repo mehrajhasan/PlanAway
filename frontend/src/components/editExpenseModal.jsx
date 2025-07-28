@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const EditExpenseModal = ({ isOpen, onClose, onSave, expense }) => {
+const EditExpenseModal = ({ isOpen, onClose, onSave, onDelete, expense }) => {
   const [expenseData, setExpenseData] = useState({
     title: '',
     activity: '',
@@ -45,6 +45,13 @@ const EditExpenseModal = ({ isOpen, onClose, onSave, expense }) => {
     setExpenseData({ title: '', activity: '', price: '', date: '', notes: '', taggedUsers: '' });
   };
 
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this expense?")) {
+      onDelete(expense.id);
+      onClose();
+    }
+  };
+
   return (
     <div className="reservation-modal-overlay">
       <div className="reservation-modal">
@@ -53,57 +60,29 @@ const EditExpenseModal = ({ isOpen, onClose, onSave, expense }) => {
           <button className="reservation-close-btn" onClick={onClose}>&times;</button>
         </div>
         <form id="expense-form" onSubmit={handleSave}>
-            <select 
-                name="activity" 
-                value={expenseData.activity}
-                onChange={handleChange}
-                required
-            >
-                <option value="" disabled>Select category</option>
-                <option value="flights">Flights</option>
-                <option value="lodging">Lodging</option>
-                <option value="transportation">Transportation</option>
-                <option value="dining">Dining</option>
-                <option value="shopping">Shopping</option>
-                <option value="activities">Activities</option>
-                <option value="other">Other</option>
-            </select>
-            <input
-            name="title"
-            placeholder="Description"
-            value={expenseData.title}
-            onChange={handleChange}
-            required
-            />
-            <input
-            name="price"
-            placeholder="Price"
-            value={expenseData.price}
-            onChange={handleChange}
-            required
-            />
-            <input
-            name="date"
-            type="date"
-            value={expenseData.date}
-            onChange={handleChange}
-            required
-            />
-            <input
-            name="notes"
-            placeholder="Notes"
-            value={expenseData.notes}
-            onChange={handleChange}
-            />
 
-            <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', margin: '10px' }}
-            onClick={handleSave}
-            >
-            Save Activity
-            </button>
+          <select name="activity" value={expenseData.activity} onChange={handleChange} required>
+            <option value="" disabled>Select category</option>
+            <option value="flights">Flights</option>
+            <option value="lodging">Lodging</option>
+            <option value="transportation">Transportation</option>
+            <option value="dining">Dining</option>
+            <option value="shopping">Shopping</option>
+            <option value="activities">Activities</option>
+            <option value="other">Other</option>
+          </select>
+            <input name="title" placeholder="Description" value={expenseData.title} onChange={handleChange} required/>
+            <input name="price" placeholder="Price" value={expenseData.price} onChange={handleChange} required/>
+            <input name="date" type="date" value={expenseData.date} onChange={handleChange} required/>
+            <input name="notes" placeholder="Notes" value={expenseData.notes} onChange={handleChange}/>
+            <div  className="buttons" style={{ display: 'flex', justifyContent: 'space-around', gap: '10px', marginTop: '10px',marginLeft: '15px' }}>
+              <button type="button" className="btn btn-danger" style={{ width: '50%', backgroundColor: '#d4d4d8' }} onClick={handleDelete}>
+                Delete
+              </button>
+              <button type="submit" className="btn btn-primary" style={{ width: '50%'}} onClick={handleSave}>
+                Save Expense
+              </button>
+            </div>
         </form>
       </div>
     </div>

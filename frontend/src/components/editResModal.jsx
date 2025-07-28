@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
 
-const EditReservationModal = ({ isOpen, onClose, onSave, editingData }) => {
-    const [type, setType] = useState('Flights');
+const EditReservationModal = ({ onClose, onSave, onDelete, editingData }) => {
+  const [type, setType] = useState(editingData?.type || '')
 
-    const [flightData, setFlightData] = useState({
-        airline: '',
-        flightNumber: '',
-        fromAirport: '',
-        toAirport: '',
-        arrivalDate: '',
-        arrivalTime: '',
-        price: '',
-        seat: '',
-        seatCategory: ''
-    });
+  const [flightData, setFlightData] = useState({
+      airline: '',
+      flightNumber: '',
+      fromAirport: '',
+      toAirport: '',
+      arrivalDate: '',
+      arrivalTime: '',
+      price: '',
+      seat: '',
+      seatCategory: ''
+  });
 
   const [lodgingData, setLodgingData] = useState({
     name: '',
@@ -41,19 +41,19 @@ const EditReservationModal = ({ isOpen, onClose, onSave, editingData }) => {
 
   if (!editingData) return null;
 
-    useEffect(() => {
-        if (!editingData) return;
+  useEffect(() => {
+      if (!editingData) return;
 
-        setType(editingData.type);
+      setType(editingData.type);
 
-        switch (editingData.type) {
-            case 'Flights': setFlightData({ ...editingData }); break;
-            case 'Lodging': setLodgingData({ ...editingData }); break;
-            case 'Transportation': setTransportationData({ ...editingData }); break;
-            case 'Dining': setDiningData({ ...editingData }); break;
-            default: break;
-        }
-    }, [editingData]);
+      switch (editingData.type) {
+          case 'Flights': setFlightData({ ...editingData }); break;
+          case 'Lodging': setLodgingData({ ...editingData }); break;
+          case 'Transportation': setTransportationData({ ...editingData }); break;
+          case 'Dining': setDiningData({ ...editingData }); break;
+          default: break;
+      }
+  }, [editingData]);
 
   const handleChange = (e, setter, data) => {
     setter({
@@ -62,7 +62,8 @@ const EditReservationModal = ({ isOpen, onClose, onSave, editingData }) => {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = (e) => {
+    e.preventDefault();
     let data;
     switch (type) {
         case 'Flights':
@@ -91,10 +92,20 @@ const EditReservationModal = ({ isOpen, onClose, onSave, editingData }) => {
     setLodgingData({ name: '', address: '', checkIn: '', checkOut: '', price: '' });
     setTransportationData({ provider: '', vehicle: '', pickupDate: '', dropoffDate: '', price: '' });
     setDiningData({ restaurant: '', address: '', reservationDate: '', reservationTime: '', partySize: '' });
-};
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this reservation?")) {
+      onDelete(editingData.type, editingData.id);
+      onClose();
+    }
+  };
+
+
 
 
   const renderFields = () => {
+    if (!type) return null;
     switch (type) {
       case 'Flights':
         return (
@@ -152,19 +163,17 @@ const EditReservationModal = ({ isOpen, onClose, onSave, editingData }) => {
           <h2 className="reservation-modal-title">Edit a reservation</h2>
           <button className="reservation-close-btn" onClick={onClose}>&times;</button>
         </div>
-        <form id="expense-form">
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="Flights">Flights</option>
-            <option value="Lodging">Lodging</option>
-            <option value="Transportation">Transportation</option>
-            <option value="Dining">Dining</option>
-          </select>
+        <form id="expense-form" onSubmit={handleSave}>
 
-          {renderFields()}
-
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', margin: '10px' }} onClick={handleSave}>
-            Save Reservation
-          </button>
+          {renderFields()}  
+          <div  className="buttons" style={{ display: 'flex', justifyContent: 'space-around', gap: '10px', marginTop: '10px',marginLeft: '15px' }}>
+              <button type="button" className="btn btn-danger" style={{ width: '50%', backgroundColor: '#d4d4d8' }} onClick={handleDelete}>
+                Delete
+              </button>
+              <button type="submit" className="btn btn-primary" style={{ width: '50%'}} onClick={handleSave}>
+                Save Reservation
+              </button>
+            </div>
         </form>
       </div>
     </div>
