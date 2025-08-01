@@ -2,6 +2,9 @@ package com.planaway.backend.models;
 
 import jakarta.persistence.*;
 import java.util.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.*;
 
 @Getter
@@ -12,8 +15,8 @@ import lombok.*;
 @Table(name="users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "firebase_uid")
+    private String firebaseUid;
 
     private String name;
 
@@ -23,6 +26,7 @@ public class User {
     private String profilePicUrl;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Trip> trips = new ArrayList<>();
 
 }
