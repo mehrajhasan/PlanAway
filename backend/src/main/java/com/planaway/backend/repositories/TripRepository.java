@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByOwner(User owner);
+    List<Trip> findBySharedWithContaining(User user);
 }
