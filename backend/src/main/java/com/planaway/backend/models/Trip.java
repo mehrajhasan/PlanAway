@@ -2,6 +2,9 @@ package com.planaway.backend.models;
 
 import jakarta.persistence.*;
 import java.util.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.*;
 
 import lombok.*;
@@ -18,8 +21,9 @@ public class Trip {
     private Long id;    
     
     @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "owner_firebase_uid", referencedColumnName = "firebase_uid")
     private User owner;
+
 
     private String name;
     private String destination;
@@ -29,4 +33,14 @@ public class Trip {
     private String notes;
 
     private String tripPic;
+
+    @ManyToMany
+    @JoinTable(
+        name = "trip_shared_users",
+        joinColumns = @JoinColumn(name = "trip_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_firebase_uid", referencedColumnName = "firebase_uid")
+    )
+    @JsonIgnore
+    private Set<User> sharedWith = new HashSet<>();
+
 }
