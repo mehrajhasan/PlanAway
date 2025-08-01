@@ -29,12 +29,19 @@ public class UserController {
         return userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        User existing = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-        existing.setName(updatedUser.getName());
-        existing.setEmail(updatedUser.getEmail());
-        existing.setProfilePicUrl(updatedUser.getProfilePicUrl());
-        return userRepo.save(existing);
+    @PatchMapping("/updateName/{id}")
+    public User updateName(@PathVariable Long id, @RequestBody String updatedName){
+        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setName(updatedName);
+
+        return userRepo.save(user);
+    }
+
+    @PatchMapping("/{id}")
+    public User updateProfilePic(@PathVariable Long id, @RequestBody String updatedPfp){
+        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setProfilePicUrl(updatedPfp);
+
+        return userRepo.save(user);
     }
 }
