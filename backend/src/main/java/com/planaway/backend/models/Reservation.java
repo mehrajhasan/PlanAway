@@ -18,10 +18,6 @@ public abstract class Reservation {
     private Long id;
 
     private String type; 
-    private String title;
-    private String notes;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
 
     @ManyToOne
     @JoinColumn(name = "trip_id")
