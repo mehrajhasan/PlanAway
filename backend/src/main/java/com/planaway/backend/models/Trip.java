@@ -43,4 +43,8 @@ public class Trip {
     @JsonIgnore
     private Set<User> sharedWith = new HashSet<>();
 
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<ItineraryItem> itinerary = new ArrayList<>();
+
+
 }
